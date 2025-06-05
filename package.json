@@ -1,0 +1,26 @@
+{
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.8.3"
+  },
+  "workspaces": ["apps/**"],
+
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "dev:client": "pnpm --filter client dev",
+    "dev:server": "pnpm --filter server dev",
+
+    "build": "pnpm run --recursive build",
+    "build:client": "pnpm --filter client build",
+    "build:server": "pnpm --filter server build",
+
+    "format": "biome check --write",
+    "format:check": "biome check",
+
+    "typecheck": "pnpm run typecheck --recursive",
+    "typecheck:client": "pnpm --filter client typecheck",
+    "typecheck:server": "pnpm --filter server typecheck",
+
+    "clean": "pnpm run --recursive clean && rm -rf node_modules"
+  }
+}

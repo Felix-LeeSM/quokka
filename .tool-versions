@@ -1,0 +1,4 @@
+direnv 2.35.0
+pnpm 10.11.1
+java openjdk-21.0.2
+nodejs 22.16.0

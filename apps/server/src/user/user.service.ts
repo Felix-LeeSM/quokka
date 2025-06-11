@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { User } from "@prisma/client";
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { Prisma, User } from "@prisma/client";
 import { PrismaService } from "../common/prisma/prisma.service";
 
 @Injectable()
@@ -12,9 +12,36 @@ export class UserService {
     });
   }
 
+  async findWithGrpupsByUsername(username: string): Promise<
+    Prisma.UserGetPayload<{
+      include: {
+        groups: {
+          include: { group: true };
+        };
+      };
+    }>
+  > {
+    const user = await this.prismaService.user.findUnique({
+      where: { username },
+      include: {
+        groups: {
+          include: { group: true },
+        },
+      },
+    });
+
+    if (!user)
+      throw new BadRequestException("trying to find not existing user");
+
+    return user;
+  }
+
   async findById(id: number): Promise<User | null> {
     return await this.prismaService.user.findUnique({
       where: { id },
+      include: {
+        groups: true,
+      },
     });
   }
 

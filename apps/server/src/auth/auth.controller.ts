@@ -2,13 +2,16 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  HttpCode,
+  HttpStatus,
   Post,
   Res,
   UsePipes,
 } from "@nestjs/common";
 import { type Response } from "express";
 import { UserService } from "src/user/user.service";
-import { ZodValidationPipe } from "../zod-validation/zod-validation.pipe";
+import { ZodValidationPipe } from "../common/pipe/zod-validation.pipe";
 import { AuthService } from "./auth.service";
 import {
   LogInRequestDTO,
@@ -65,5 +68,12 @@ export class AuthController {
     });
 
     return { id: createdUser.id, username: createdUser.username };
+  }
+
+  @Delete("token")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logOut(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie("Authorization");
+    return;
   }
 }

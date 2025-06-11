@@ -7,9 +7,10 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
+        target: `http://localhost:${process.env.BACKEND_PORT}`,
         changeOrigin: true,
       },
     },
+    port: Number.parseInt(process.env.FRONTEND_PORT),
   },
 });

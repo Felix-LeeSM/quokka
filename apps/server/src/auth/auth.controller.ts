@@ -2,19 +2,14 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Get,
   Post,
-  Req,
   Res,
-  UseGuards,
   UsePipes,
 } from "@nestjs/common";
-import { User } from "@prisma/client";
-import { Request, type Response } from "express";
+import { type Response } from "express";
 import { UserService } from "src/user/user.service";
 import { ZodValidationPipe } from "../zod-validation/zod-validation.pipe";
 import { AuthService } from "./auth.service";
-import { JwtAuthguardGuard } from "./jwt.guard";
 import {
   LogInRequestDTO,
   LogInRequestSchema,
@@ -70,17 +65,5 @@ export class AuthController {
     });
 
     return { id: createdUser.id, username: createdUser.username };
-  }
-
-  @Get("me")
-  @UseGuards(JwtAuthguardGuard)
-  async myInfo(
-    @Req() request: Request,
-  ): Promise<Pick<User, "id" | "username">> {
-    if (!request.user) {
-      throw new BadRequestException("guard penetrated");
-    }
-
-    return { id: request.user.id, username: request.user.username };
   }
 }

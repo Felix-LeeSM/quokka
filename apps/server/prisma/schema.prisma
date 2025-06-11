@@ -43,9 +43,9 @@ enum AssignmentStatus {
 
 /// 시스템 사용자 계정
 model User {
-  id       Int    @id @default(autoincrement())
-  username String @unique
-  password String
+  id             Int    @id @default(autoincrement())
+  username       String @unique
+  hashedPassword String
 
   /// 이 유저가 속한 그룹 목록
   groups UserGroup[]

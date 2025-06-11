@@ -1,0 +1,257 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// 유저의 역할을 정의합니다.
+enum Role {
+  ADMIN /// 스케줄 수정 및 관리 가능
+  VIEWER /// 스케줄 조회만 가능
+}
+
+/// 휴가/휴무 신청의 상태를 정의합니다.
+enum RequestStatus {
+  REQUESTED /// 신청됨
+  APPROVED /// 승인됨
+  DENIED /// 거부됨
+}
+
+/// 휴가의 종류를 정의합니다.
+enum LeaveType {
+  VACATION /// 연차 휴가
+  SICK_LEAVE /// 병가
+}
+
+/// 항공편 배정 상태를 정의합니다.
+enum AssignmentStatus {
+  CONFIRMED /// 확정
+  STANDBY /// 대기
+}
+
+// --- 핵심 모델 ---
+
+/// 시스템 사용자 계정
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+
+  /// 이 유저가 속한 그룹 목록
+  groups UserGroup[]
+
+  /// 이 유저 계정과 연결된 승무원 정보 (선택적)
+  crewMember CrewMember?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 항공사 팀 등의 그룹
+model Group {
+  id          Int         @id @default(autoincrement())
+  groupName   String
+  description String?
+  users       UserGroup[] /// 이 그룹에 속한 유저 목록
+  aircrafts   Aircraft[] /// 이 그룹이 운영하는 항공기 목록
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// User와 Group의 다대다(N:M) 관계를 위한 조인 테이블
+model UserGroup {
+  id   Int  @id @default(autoincrement())
+  role Role /// 이 그룹 내에서 유저가 갖는 역할
+
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id])
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id])
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 승무원 직급 정보
+model CrewRank {
+  id       Int    @id @default(autoincrement())
+  /// JUNIOR_CABIN_ATTENDANT, SENIOR_CABIN_ATTENDANT, ASSISTANT_PURSER, PURSER
+  rankName String @unique /// 예: "사무장", "부사무장"
+
+  members                     CrewMember[]
+  AircraftTypeCrewRequirement AircraftTypeCrewRequirement[]
+  FlightCrewRequirement       FlightCrewRequirement[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 승무원 상세 정보
+model CrewMember {
+  id         Int    @id @default(autoincrement())
+  name       String
+  employeeId String @unique /// 사번
+
+  baseAirportId Int /// Base 공항
+  baseAirport   Airport  @relation(fields: [baseAirportId], references: [id])
+  userId        Int?     @unique /// 연결된 유저 계정 (선택적)
+  user          User?    @relation(fields: [userId], references: [id])
+  rankId        Int
+  rank          CrewRank @relation(fields: [rankId], references: [id])
+
+  assignments    FlightAssignment[]
+  dayOffRequests DayOffRequest[]
+  leaveRequests  Leave[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+// --- 리소스 모델 ---
+
+/// 공항 정보
+model Airport {
+  id          Int          @id @default(autoincrement())
+  iataCode    String       @unique /// 예: "ICN"
+  airportName String
+  city        String
+  country     String
+  timezone    String /// 예: "Asia/Seoul"
+  crewMembers CrewMember[] /// 이 공항을 Base로 하는 승무원 목록
+  departures  Flight[]     @relation("departures")
+  arrivals    Flight[]     @relation("arrivals")
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 항공기 기종 정보
+model AircraftType {
+  id                      Int                           @id @default(autoincrement())
+  typeName                String                        @unique /// 예: "Boeing 747"
+  manufacturer            String
+  aircrafts               Aircraft[]
+  defaultCrewRequirements AircraftTypeCrewRequirement[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 개별 항공기 정보
+model Aircraft {
+  id                 Int    @id @default(autoincrement())
+  registrationNumber String @unique /// 테일넘버
+
+  aircraftTypeId Int
+  type           AircraftType @relation(fields: [aircraftTypeId], references: [id])
+  groupId        Int /// 운영 그룹
+  group          Group        @relation(fields: [groupId], references: [id])
+
+  flights Flight[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+// --- 스케줄링 및 휴가 관련 모델 ---
+
+/// 항공편 정보
+model Flight {
+  id           Int      @id @default(autoincrement())
+  flightNumber String
+  departAt     DateTime @db.Timestamptz(3)
+  arriveAt     DateTime @db.Timestamptz(3)
+
+  aircraftId         Int
+  aircraft           Aircraft @relation(fields: [aircraftId], references: [id])
+  arrivalAirportId   Int
+  arrivalAirport     Airport  @relation("arrivals", fields: [arrivalAirportId], references: [id])
+  departureAirportId Int
+  departureAirport   Airport  @relation("departures", fields: [departureAirportId], references: [id])
+
+  crewRequirements FlightCrewRequirement[]
+  assignments      FlightAssignment[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 기종별 기본 필요 인력 규칙
+model AircraftTypeCrewRequirement {
+  id Int @id @default(autoincrement())
+
+  aircraftTypeId Int
+  aircraftType   AircraftType @relation(fields: [aircraftTypeId], references: [id])
+  rankId         Int
+  rank           CrewRank     @relation(fields: [rankId], references: [id])
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 항공편별 예외 필요 인력 규칙
+model FlightCrewRequirement {
+  id Int @id @default(autoincrement())
+
+  flightId Int
+  flight   Flight   @relation(fields: [flightId], references: [id])
+  rankId   Int
+  rank     CrewRank @relation(fields: [rankId], references: [id])
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 비행 스케줄 배정
+model FlightAssignment {
+  id     Int              @id @default(autoincrement())
+  status AssignmentStatus @default(CONFIRMED)
+
+  crewMemberId Int
+  crewMember   CrewMember @relation(fields: [crewMemberId], references: [id])
+  flightId     Int
+  flight       Flight     @relation(fields: [flightId], references: [id])
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 희망 휴무일 신청
+model DayOffRequest {
+  id            Int           @id @default(autoincrement())
+  requestedDate DateTime      @db.Date
+  status        RequestStatus @default(REQUESTED)
+
+  crewMemberId Int
+  crewMember   CrewMember @relation(fields: [crewMemberId], references: [id])
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+/// 공식 휴가/병가 신청
+model Leave {
+  id        Int           @id @default(autoincrement())
+  leaveType LeaveType
+  startDate DateTime      @db.Date
+  endDate   DateTime      @db.Date
+  status    RequestStatus @default(REQUESTED)
+  notes     String?
+
+  crewMemberId Int
+  crewMember   CrewMember @relation(fields: [crewMemberId], references: [id])
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}

@@ -1,10 +1,12 @@
 {
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.4",
     "typescript": "^5.8.3"
   },
   "workspaces": ["apps/**"],
-
   "scripts": {
     "dev": "pnpm run --parallel dev",
     "dev:client": "pnpm --filter client dev",
@@ -17,10 +19,19 @@
     "format": "biome check --write",
     "format:check": "biome check",
 
-    "typecheck": "pnpm run typecheck --recursive",
-    "typecheck:client": "pnpm --filter client typecheck",
-    "typecheck:server": "pnpm --filter server typecheck",
+    "test": "jest",
 
     "clean": "pnpm run --recursive clean && rm -rf node_modules"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   }
 }

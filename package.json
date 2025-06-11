@@ -6,9 +6,7 @@
     "ts-jest": "^29.3.4",
     "typescript": "^5.8.3"
   },
-  "workspaces": [
-    "apps/**"
-  ],
+  "workspaces": ["apps/**"],
   "scripts": {
     "dev": "pnpm run --parallel dev",
     "dev:client": "pnpm --filter client dev",
@@ -22,19 +20,13 @@
     "clean": "pnpm run --recursive clean && rm -rf node_modules"
   },
   "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
+    "moduleFileExtensions": ["js", "json", "ts"],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
+    "collectCoverageFrom": ["**/*.(t|j)s"],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },

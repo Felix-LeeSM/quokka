@@ -42,6 +42,20 @@ enum AssignmentStatus {
   STANDBY /// 대기
 }
 
+/// 항공기 정비의 종류를 정의합니다.
+enum MaintenanceType {
+  SCHEDULED /// 정기 정비 (C-check, D-check 등)
+  UNSCHEDULED /// 비정기 또는 긴급 정비 (결함 발생 등)
+}
+
+/// 항공기 정비의 진행 상태를 정의합니다.
+enum MaintenanceStatus {
+  PLANNED /// 계획됨
+  IN_PROGRESS /// 진행 중
+  COMPLETED /// 완료됨
+  CANCELLED /// 취소됨
+}
+
 // --- 핵심 모델 ---
 
 /// 시스템 사용자 계정
@@ -134,8 +148,9 @@ model Airport {
   departures  Flight[]     @relation("departures")
   arrivals    Flight[]     @relation("arrivals")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt           DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime              @updatedAt @db.Timestamptz(3)
+  AircraftMaintenance AircraftMaintenance[]
 }
 
 /// 항공기 기종 정보
@@ -162,11 +177,30 @@ model Aircraft {
 
   flights Flight[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt           DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime              @updatedAt @db.Timestamptz(3)
+  AircraftMaintenance AircraftMaintenance[]
 }
 
 // --- 스케줄링 및 휴가 관련 모델 ---
+
+/// 항공기 정비 이력
+model AircraftMaintenance {
+  id          Int               @id @default(autoincrement())
+  type        MaintenanceType
+  status      MaintenanceStatus @default(PLANNED)
+  startAt     DateTime          @db.Timestamptz(3)
+  endAt       DateTime          @db.Timestamptz(3)
+  description String?
+
+  aircraftId Int
+  aircraft   Aircraft @relation(fields: [aircraftId], references: [id])
+  airportId  Int /// 정비가 수행되는 공항
+  airport    Airport  @relation(fields: [airportId], references: [id])
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
 
 /// 항공편 정보
 model Flight {

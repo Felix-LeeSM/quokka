@@ -44,6 +44,7 @@ export class AuthController {
     res.cookie("Authorizaition", `Bearer ${token}`, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 10,
+      sameSite: true,
     });
 
     return { id: user.id, username: user.username };

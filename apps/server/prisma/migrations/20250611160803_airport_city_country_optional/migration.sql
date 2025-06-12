@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Airport" ALTER COLUMN "city" DROP NOT NULL,
+ALTER COLUMN "country" DROP NOT NULL;

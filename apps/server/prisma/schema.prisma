@@ -51,7 +51,7 @@ model User {
   hashedPassword String
 
   /// 이 유저가 속한 그룹 목록
-  groups UserGroup[]
+  userGroups UserGroup[]
 
   /// 이 유저 계정과 연결된 승무원 정보 (선택적)
   crewMember CrewMember?
@@ -63,9 +63,9 @@ model User {
 /// 항공사 팀 등의 그룹
 model Group {
   id          Int         @id @default(autoincrement())
-  groupName   String
+  name        String
   description String?
-  users       UserGroup[] /// 이 그룹에 속한 유저 목록
+  userGroups  UserGroup[] /// 이 그룹에 속한 유저 목록
   aircrafts   Aircraft[] /// 이 그룹이 운영하는 항공기 목록
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
@@ -88,9 +88,8 @@ model UserGroup {
 
 /// 승무원 직급 정보
 model CrewRank {
-  id       Int    @id @default(autoincrement())
-  /// JUNIOR_CABIN_ATTENDANT, SENIOR_CABIN_ATTENDANT, ASSISTANT_PURSER, PURSER
-  rankName String @unique /// 예: "사무장", "부사무장"
+  id   Int    @id @default(autoincrement())
+  name String @unique /// JUNIOR_CABIN_ATTENDANT, SENIOR_CABIN_ATTENDANT, ASSISTANT_PURSER, PURSER
 
   members                     CrewMember[]
   AircraftTypeCrewRequirement AircraftTypeCrewRequirement[]
@@ -127,9 +126,9 @@ model CrewMember {
 model Airport {
   id          Int          @id @default(autoincrement())
   iataCode    String       @unique /// 예: "ICN"
-  airportName String
-  city        String
-  country     String
+  name        String
+  city        String?
+  country     String?
   timezone    String /// 예: "Asia/Seoul"
   crewMembers CrewMember[] /// 이 공항을 Base로 하는 승무원 목록
   departures  Flight[]     @relation("departures")
@@ -142,7 +141,7 @@ model Airport {
 /// 항공기 기종 정보
 model AircraftType {
   id                      Int                           @id @default(autoincrement())
-  typeName                String                        @unique /// 예: "Boeing 747"
+  name                    String                        @unique /// 예: "Boeing 747"
   manufacturer            String
   aircrafts               Aircraft[]
   defaultCrewRequirements AircraftTypeCrewRequirement[]

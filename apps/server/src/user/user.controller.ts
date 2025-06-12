@@ -21,7 +21,7 @@ export class UserController {
     Omit<
       Prisma.UserGetPayload<{
         include: {
-          groups: {
+          userGroups: {
             include: { group: true };
           };
         };
@@ -30,6 +30,7 @@ export class UserController {
     >
   > {
     if (!request.user) throw new BadRequestException("guard penetrated");
+
     const { hashedPassword, ...user } =
       await this.userService.findWithGrpupsByUsername(request.user.username);
 

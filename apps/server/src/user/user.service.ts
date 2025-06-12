@@ -15,7 +15,7 @@ export class UserService {
   async findWithGrpupsByUsername(username: string): Promise<
     Prisma.UserGetPayload<{
       include: {
-        groups: {
+        userGroups: {
           include: { group: true };
         };
       };
@@ -24,7 +24,7 @@ export class UserService {
     const user = await this.prismaService.user.findUnique({
       where: { username },
       include: {
-        groups: {
+        userGroups: {
           include: { group: true },
         },
       },
@@ -39,9 +39,6 @@ export class UserService {
   async findById(id: number): Promise<User | null> {
     return await this.prismaService.user.findUnique({
       where: { id },
-      include: {
-        groups: true,
-      },
     });
   }
 

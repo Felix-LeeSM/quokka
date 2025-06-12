@@ -11,7 +11,8 @@
     "clean": "rm -rf node_modules dist",
     "dev": "prisma generate && nest start --watch --debug",
     "start": "node dist/main",
-    "test": "jest"
+    "test": "jest",
+    "seed": "prisma generate && prisma migrate reset --force --skip-seed && ts-node prisma/seed/index.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.3",

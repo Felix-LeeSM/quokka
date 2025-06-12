@@ -12,7 +12,8 @@
       "**/tsconfig.json",
       "node_modules",
       "generated",
-      "dist"
+      "dist",
+      "seed/**/*.json"
     ]
   },
   "formatter": {

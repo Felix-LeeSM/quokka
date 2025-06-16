@@ -76,11 +76,12 @@ model User {
 
 /// 항공사 팀 등의 그룹
 model Group {
-  id          Int         @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   name        String
   description String?
-  userGroups  UserGroup[] /// 이 그룹에 속한 유저 목록
   aircrafts   Aircraft[] /// 이 그룹이 운영하는 항공기 목록
+  userGroups  UserGroup[] /// 이 그룹에 속한 유저 목록
+  CrewMember  CrewMember[]
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -121,6 +122,8 @@ model CrewMember {
 
   baseAirportId Int /// Base 공항
   baseAirport   Airport  @relation(fields: [baseAirportId], references: [id])
+  groupId       Int
+  group         Group    @relation(fields: [groupId], references: [id])
   userId        Int?     @unique /// 연결된 유저 계정 (선택적)
   user          User?    @relation(fields: [userId], references: [id])
   rankId        Int
@@ -225,7 +228,8 @@ model Flight {
 
 /// 기종별 기본 필요 인력 규칙
 model AircraftTypeCrewRequirement {
-  id Int @id @default(autoincrement())
+  id    Int @id @default(autoincrement())
+  count Int
 
   aircraftTypeId Int
   aircraftType   AircraftType @relation(fields: [aircraftTypeId], references: [id])
@@ -238,7 +242,8 @@ model AircraftTypeCrewRequirement {
 
 /// 항공편별 예외 필요 인력 규칙
 model FlightCrewRequirement {
-  id Int @id @default(autoincrement())
+  id    Int @id @default(autoincrement())
+  count Int
 
   flightId Int
   flight   Flight   @relation(fields: [flightId], references: [id])

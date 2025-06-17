@@ -99,6 +99,8 @@ model UserGroup {
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([userId, groupId])
 }
 
 /// 승무원 직급 정보

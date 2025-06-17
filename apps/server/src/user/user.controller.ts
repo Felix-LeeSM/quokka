@@ -1,39 +1,22 @@
-import {
-  BadRequestException,
-  Controller,
-  Get,
-  Req,
-  UseGuards,
-} from "@nestjs/common";
-
-import { Prisma } from "@prisma/client";
-import { Request } from "express";
+import { Controller, Get, UseGuards } from "@nestjs/common";
 import { JwtAuthguardGuard } from "../common/guard/jwt.guard";
 import { UserService } from "./user.service";
+import type { UserWithGroups } from "../common/types/entity";
+import { AuthUser } from "../common/decorator/auth-user";
+import { User } from "@prisma/client";
 
-@Controller("api/user")
+@Controller("user")
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get("me")
   @UseGuards(JwtAuthguardGuard)
-  async myInfo(@Req() request: Request): Promise<
-    Omit<
-      Prisma.UserGetPayload<{
-        include: {
-          userGroups: {
-            include: { group: true };
-          };
-        };
-      }>,
-      "hashedPassword"
-    >
-  > {
-    if (!request.user) throw new BadRequestException("guard penetrated");
+  async myInfo(
+    @AuthUser() user: User,
+  ): Promise<Omit<UserWithGroups, "hashedPassword">> {
+    const { hashedPassword, ...userInfo } =
+      await this.userService.findWithGrpupsByUsername(user.username);
 
-    const { hashedPassword, ...user } =
-      await this.userService.findWithGrpupsByUsername(request.user.username);
-
-    return user;
+    return userInfo;
   }
 }

@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Post,
   Res,
+  UseGuards,
   UsePipes,
 } from "@nestjs/common";
 import { type Response } from "express";
@@ -23,8 +24,9 @@ import {
   type LoginResponseDTO,
   type SignUpResponseDTO,
 } from "./schema/response";
+import { JwtAuthguardGuard } from "../common/guard/jwt.guard";
 
-@Controller("api/auth")
+@Controller("auth")
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -43,7 +45,7 @@ export class AuthController {
 
     res.cookie("Authorizaition", `Bearer ${token}`, {
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 10,
+      maxAge: 1000 * 60 * 60 * 10, // 10h
       sameSite: true,
     });
 
@@ -71,6 +73,7 @@ export class AuthController {
     return { id: createdUser.id, username: createdUser.username };
   }
 
+  @UseGuards(JwtAuthguardGuard)
   @Delete("token")
   @HttpCode(HttpStatus.NO_CONTENT)
   async logOut(@Res({ passthrough: true }) res: Response) {

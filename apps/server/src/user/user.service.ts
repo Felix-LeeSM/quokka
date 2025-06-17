@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { Prisma, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import { PrismaService } from "../common/prisma/prisma.service";
+import type { UserWithGroups } from "../common/types/entity";
 
 @Injectable()
 export class UserService {
@@ -12,15 +13,7 @@ export class UserService {
     });
   }
 
-  async findWithGrpupsByUsername(username: string): Promise<
-    Prisma.UserGetPayload<{
-      include: {
-        userGroups: {
-          include: { group: true };
-        };
-      };
-    }>
-  > {
+  async findWithGrpupsByUsername(username: string): Promise<UserWithGroups> {
     const user = await this.prismaService.user.findUnique({
       where: { username },
       include: {
